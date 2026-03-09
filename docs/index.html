@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="UspMusicBot - Техническое задание для Telegram-бота по генерации музыки с AI">
+    <title>UspMusicBot - Техническое задание</title>
+    <style>
+        :root {
+            --primary-color: #FF6B35;
+            --secondary-color: #003366;
+            --accent-color: #FFFFFF;
+            --bg-color: #F5F5F5;
+            --text-color: #333333;
+            --border-color: #E0E0E0;
+            --code-bg: #2D2D2D;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #FF8C5A 100%);
+            color: white;
+            padding: 2rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+        }
+
+        .logo-text h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            padding: 2rem 1.5rem;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 120px;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+            padding-left: 1rem;
+        }
+
+        .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            background: white;
+            margin: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 140px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .section-icon {
+            font-size: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+        }
+
+        .feature-icon {
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--code-bg);
+            color: #F8F8F2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #555;
+        }
+
+        .code-lang {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background: var(--bg-color);
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), #FF8C5A);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 80px;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 18px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px var(--bg-color);
+        }
+
+        .timeline-content {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.25rem;
+        }
+
+        .badge-success {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .badge-warning {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .badge-info {
+            background: #E3F2FD;
+            color: #1565C0;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-info {
+            background: #E3F2FD;
+            border-left: 4px solid #1976D2;
+            color: #0D47A1;
+        }
+
+        .alert-warning {
+            background: #FFF3E0;
+            border-left: 4px solid #F57C00;
+            color: #E65100;
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            border-left: 4px solid #388E3C;
+            color: #1B5E20;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                z-index: 1001;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+            }
+
+            .sidebar.open {
+                display: block;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .main-content {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .code-block {
+                font-size: 0.8rem;
+                padding: 1rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF8C5A;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .arch-box {
+            background: var(--bg-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🎵</span>
+                <div class="logo-text">
+                    <h1>UspMusicBot</h1>
+                    <p>Техническое задание - AI Music Generation Bot</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="https://t.me/gusli_aibot" class="btn btn-outline" target="_blank">
+                    📱 Референс
+                </a>
+                <a href="https://github.com/uspmusicbot/UspMusicBot" class="btn btn-primary" target="_blank">
+                    💻 GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Обзор</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#overview" class="nav-link">Описание проекта</a></li>
+                        <li class="nav-item"><a href="#features" class="nav-link">Функциональность</a></li>
+                        <li class="nav-item"><a href="#audience" class="nav-link">Целевая аудитория</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Функции</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#mvp" class="nav-link">MVP</a></li>
+                        <li class="nav-item"><a href="#generation" class="nav-link">Генерация музыки</a></li>
+                        <li class="nav-item"><a href="#payments" class="nav-link">Платежи</a></li>
+                        <li class="nav-item"><a href="#webapp" class="nav-link">Web App</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Техническое</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#architecture" class="nav-link">Архитектура</a></li>
+                        <li class="nav-item"><a href="#stack" class="nav-link">Технологии</a></li>
+                        <li class="nav-item"><a href="#database" class="nav-link">База данных</a></li>
+                        <li class="nav-item"><a href="#api" class="nav-link">API интеграции</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Разработка</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="#roadmap" class="nav-link">План разработки</a></li>
+                        <li class="nav-item"><a href="#deployment" class="nav-link">Деплой</a></li>
+                        <li class="nav-item"><a href="#security" class="nav-link">Безопасность</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview" class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Общее описание проекта</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Недель разработки</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">API интеграций</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">AI-powered</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">∞</div>
+                        <div class="stat-label">Возможности</div>
+                    </div>
+                </div>
+
+                <p><strong>UspMusicBot</strong> - это интеллектуальный помощник для создания профессиональных музыкальных треков за 1 минуту без специальных навыков. Проект представляет собой Telegram-бот с веб-интерфейсом, использующий передовые AI-технологии для генерации музыки.</p>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">💡</span>
+                    <div>
+                        <strong>Референс:</strong> Проект вдохновлен успешным ботом <a href="https://t.me/gusli_aibot" target="_blank">@gusli_aibot</a> (SoNata - Создать песню)
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features" class="section">
+                <div class="section-header">
+                    <span class="section-icon">✨</span>
+                    <h2 class="section-title">Основные возможности</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🎤</span>
+                            <h3 class="card-title">Идея → Музыка</h3>
+                        </div>
+                        <p class="card-description">
+                            Опишите идею текстом или голосом, бот создаст текст песни и сгенерирует трек в выбранном стиле
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">📝</span>
+                            <h3 class="card-title">Текст → Музыка</h3>
+                        </div>
+                        <p class="card-description">
+                            Предоставьте готовый текст песни, выберите стиль и получите профессиональный трек с вокалом
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🎵</span>
+                            <h3 class="card-title">Плейлисты</h3>
+                        </div>
+                        <p class="card-description">
+                            Сохраняйте созданные треки, создавайте плейлисты и делитесь ими с друзьями
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">💳</span>
+                            <h3 class="card-title">Монетизация</h3>
+                        </div>
+                        <p class="card-description">
+                            Система балансов с интеграцией YooKassa и CryptoBot для покупки пакетов генераций
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🌐</span>
+                            <h3 class="card-title">Web App</h3>
+                        </div>
+                        <p class="card-description">
+                            Полнофункциональный веб-интерфейс с расширенными возможностями управления
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🔐</span>
+                            <h3 class="card-title">Админ-панель</h3>
+                        </div>
+                        <p class="card-description">
+                            Управление пользователями, аналитика, рассылки и мониторинг API
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Target Audience -->
+            <section id="audience" class="section">
+                <div class="section-header">
+                    <span class="section-icon">👥</span>
+                    <h2 class="section-title">Целевая аудитория</h2>
+                </div>
+
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="feature-icon">📹</span>
+                        <div>
+                            <strong>Контент-криейторы</strong><br>
+                            Блогеры, TikTok/YouTube авторы, нуждающиеся в уникальной фоновой музыке
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">🎸</span>
+                        <div>
+                            <strong>Музыканты-любители</strong><br>
+                            Начинающие авторы песен, желающие быстро протестировать свои идеи
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">📊</span>
+                        <div>
+                            <strong>Маркетологи</strong><br>
+                            Создание джинглов, рекламных треков и фоновой музыки для промо
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">🎁</span>
+                        <div>
+                            <strong>Обычные пользователи</strong><br>
+                            Создание персональных песен для подарков и особых случаев
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- MVP Section -->
+            <section id="mvp" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🚀</span>
+                    <h2 class="section-title">MVP - Минимально жизнеспособный продукт</h2>
+                </div>
+
+                <h3>Основной флоу генерации</h3>
+
+                <div class="architecture-diagram">
+                    <div class="arch-box">👤 Пользователь отправляет идею/текст</div>
+                    <div class="arch-arrow">⬇️</div>
+                    <div class="arch-box">🤖 Claude API генерирует текст песни (если нужно)</div>
+                    <div class="arch-arrow">⬇️</div>
+                    <div class="arch-box">🎨 Выбор музыкального стиля</div>
+                    <div class="arch-arrow">⬇️</div>
+                    <div class="arch-box">🎵 Suno API генерирует музыку (45-90 сек)</div>
+                    <div class="arch-arrow">⬇️</div>
+                    <div class="arch-box">📥 Готовый MP3 трек отправляется пользователю</div>
+                </div>
+
+                <div class="alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    <div>
+                        <strong>MVP готовность:</strong> Все ключевые компоненты протестированы и готовы к интеграции
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section id="architecture" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🏗️</span>
+                    <h2 class="section-title">Архитектура системы</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">📱</span>
+                            <h4 class="card-title">Frontend Layer</h4>
+                        </div>
+                        <ul>
+                            <li>Telegram Bot Interface</li>
+                            <li>Web App (React.js)</li>
+                            <li>Telegram WebApp SDK</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">⚙️</span>
+                            <h4 class="card-title">Backend Layer</h4>
+                        </div>
+                        <ul>
+                            <li>aiogram Bot Handler</li>
+                            <li>FastAPI REST API</li>
+                            <li>FSM State Management</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🔧</span>
+                            <h4 class="card-title">Services Layer</h4>
+                        </div>
+                        <ul>
+                            <li>Suno API Client</li>
+                            <li>Claude AI Client</li>
+                            <li>Whisper Transcription</li>
+                            <li>Payment Services</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">💾</span>
+                            <h4 class="card-title">Data Layer</h4>
+                        </div>
+                        <ul>
+                            <li>SQLite/PostgreSQL</li>
+                            <li>Redis (Cache & FSM)</li>
+                            <li>SQLAlchemy ORM</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack -->
+            <section id="stack" class="section">
+                <div class="section-header">
+                    <span class="section-icon">💻</span>
+                    <h2 class="section-title">Технологический стек</h2>
+                </div>
+
+                <h3>Backend</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">requirements.txt</span>
+                    </div>
+<pre># Telegram Bot Framework
+aiogram==3.15.0
+aiohttp==3.10.11
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+alembic==1.14.0
+
+# AI Services
+anthropic==0.18.1        # Claude API
+openai==1.55.3           # Whisper API
+httpx==0.27.2            # Suno API
+
+# Payment Systems
+yookassa==3.0.1
+aiocryptopay==0.5.0
+
+# FastAPI
+fastapi==0.115.6
+uvicorn==0.34.0</pre>
+                </div>
+
+                <h3>Frontend (Web App)</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">package.json</span>
+                    </div>
+<pre>{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@twa-dev/sdk": "^7.0.0",
+    "axios": "^1.6.0",
+    "react-router-dom": "^6.20.0"
+  }
+}</pre>
+                </div>
+            </section>
+
+            <!-- Database -->
+            <section id="database" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🗄️</span>
+                    <h2 class="section-title">База данных</h2>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Таблица</th>
+                                <th>Назначение</th>
+                                <th>Ключевые поля</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>users</strong></td>
+                                <td>Пользователи бота</td>
+                                <td>telegram_id, balance, referrer_id</td>
+                            </tr>
+                            <tr>
+                                <td><strong>songs</strong></td>
+                                <td>Созданные треки</td>
+                                <td>user_id, lyrics, style, audio_url</td>
+                            </tr>
+                            <tr>
+                                <td><strong>transactions</strong></td>
+                                <td>История платежей</td>
+                                <td>user_id, provider, status, amount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>playlists</strong></td>
+                                <td>Плейлисты пользователей</td>
+                                <td>user_id, name, is_public</td>
+                            </tr>
+                            <tr>
+                                <td><strong>lyrics_cache</strong></td>
+                                <td>Кэш сгенерированных текстов</td>
+                                <td>user_id, prompt, generated_lyrics</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- API Integrations -->
+            <section id="api" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔌</span>
+                    <h2 class="section-title">API интеграции</h2>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🎵</span>
+                            <h4 class="card-title">Suno API</h4>
+                        </div>
+                        <p><span class="badge badge-info">Основной</span></p>
+                        <p class="card-description">
+                            Генерация музыки через AIMLAPI.com провайдер.
+                            Стоимость: ~$0.50-$1.50 за трек
+                        </p>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Поддержка всех стилей музыки</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Время генерации: 45-90 сек</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Качество: CD (44.1 kHz, MP3)</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🤖</span>
+                            <h4 class="card-title">Claude API</h4>
+                        </div>
+                        <p><span class="badge badge-success">Anthropic</span></p>
+                        <p class="card-description">
+                            Генерация текстов песен с помощью Claude Sonnet 4.
+                            Стоимость: ~$0.01-$0.02 за текст
+                        </p>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Профессиональные тексты</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Поддержка русского языка</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Структура: куплеты, припев</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🎤</span>
+                            <h4 class="card-title">Whisper API</h4>
+                        </div>
+                        <p><span class="badge badge-warning">OpenAI</span></p>
+                        <p class="card-description">
+                            Транскрибация голосовых сообщений.
+                            Стоимость: $0.006 за минуту
+                        </p>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Точность: 95%+</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Автоопределение языка</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">💳</span>
+                            <h4 class="card-title">YooKassa</h4>
+                        </div>
+                        <p><span class="badge badge-info">Платежи РФ</span></p>
+                        <p class="card-description">
+                            Основная платежная система для приема платежей в рублях
+                        </p>
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Карты РФ, СБП</div>
+                            </li>
+                            <li class="feature-item">
+                                <span class="feature-icon">✓</span>
+                                <div>Комиссия: 2.8% + 10₽</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payments -->
+            <section id="payments" class="section">
+                <div class="section-header">
+                    <span class="section-icon">💰</span>
+                    <h2 class="section-title">Модель монетизации</h2>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>План</th>
+                                <th>Стоимость</th>
+                                <th>Кредиты</th>
+                                <th>Цена за трек</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Бесплатно</strong></td>
+                                <td>0₽</td>
+                                <td>3 трека</td>
+                                <td>0₽</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Стартовый</strong></td>
+                                <td>299₽</td>
+                                <td>10 треков</td>
+                                <td>~30₽</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Популярный</strong> ⭐</td>
+                                <td>799₽</td>
+                                <td>30 треков</td>
+                                <td>~27₽</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Профессионал</strong> 💎</td>
+                                <td>1,999₽</td>
+                                <td>100 треков</td>
+                                <td>~20₽</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        <strong>Важно:</strong> Кредиты не накапливаются между месяцами. Используйте систему подписок для регулярных пользователей.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Development Roadmap -->
+            <section id="roadmap" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🗓️</span>
+                    <h2 class="section-title">План разработки (8 недель)</h2>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Неделя 1-3: MVP Backend</div>
+                            <ul>
+                                <li>Настройка окружения и структуры проекта</li>
+                                <li>Реализация database моделей (SQLAlchemy)</li>
+                                <li>Интеграция Telegram Bot (aiogram)</li>
+                                <li>Suno API + Claude API клиенты</li>
+                                <li>Основной флоу генерации музыки</li>
+                                <li>Whisper API для голосовых</li>
+                                <li>Система балансов</li>
+                            </ul>
+                            <span class="badge badge-success">Приоритет: Высокий</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Неделя 4: Платежи и монетизация</div>
+                            <ul>
+                                <li>Интеграция YooKassa</li>
+                                <li>Webhook обработка</li>
+                                <li>Интеграция CryptoBot</li>
+                                <li>История транзакций</li>
+                                <li>UI для покупки пакетов</li>
+                            </ul>
+                            <span class="badge badge-info">Приоритет: Средний</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Неделя 5-6: Web App Frontend</div>
+                            <ul>
+                                <li>Настройка React проекта</li>
+                                <li>Интеграция Telegram WebApp SDK</li>
+                                <li>Создание страниц (Главная, Песни, Баланс)</li>
+                                <li>Аудио-плеер</li>
+                                <li>Адаптивный дизайн</li>
+                                <li>Деплой Web App</li>
+                            </ul>
+                            <span class="badge badge-info">Приоритет: Средний</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Неделя 7: Админ-панель</div>
+                            <ul>
+                                <li>Админ-команды в Telegram</li>
+                                <li>Статистика пользователей</li>
+                                <li>Управление балансами</li>
+                                <li>Рассылка сообщений</li>
+                                <li>Мониторинг API usage</li>
+                            </ul>
+                            <span class="badge badge-warning">Приоритет: Низкий</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Неделя 8: Тестирование и запуск</div>
+                            <ul>
+                                <li>Unit tests (pytest)</li>
+                                <li>Integration tests</li>
+                                <li>Load testing</li>
+                                <li>Docker контейнеризация</li>
+                                <li>CI/CD pipeline</li>
+                                <li>Production деплой</li>
+                                <li>Публичный запуск 🚀</li>
+                            </ul>
+                            <span class="badge badge-success">Приоритет: Критический</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deployment -->
+            <section id="deployment" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🚢</span>
+                    <h2 class="section-title">Деплой и инфраструктура</h2>
+                </div>
+
+                <h3>Docker Compose</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">docker-compose.yml</span>
+                    </div>
+<pre>version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: uspmusicbot
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: uspmusicbot_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  webapp:
+    build:
+      context: ./frontend
+    container_name: uspmusicbot_webapp
+    restart: unless-stopped
+    ports:
+      - "3000:3000"</pre>
+                </div>
+
+                <h3>Быстрый запуск</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">bash</span>
+                    </div>
+<pre># Клонировать репозиторий
+git clone https://github.com/uspmusicbot/UspMusicBot.git
+cd UspMusicBot
+
+# Настроить переменные окружения
+cp .env.example .env
+nano .env
+
+# Запустить через Docker
+docker-compose up -d
+
+# Проверить логи
+docker-compose logs -f bot</pre>
+                </div>
+            </section>
+
+            <!-- Security -->
+            <section id="security" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔒</span>
+                    <h2 class="section-title">Безопасность</h2>
+                </div>
+
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="feature-icon">🛡️</span>
+                        <div>
+                            <strong>Rate Limiting</strong><br>
+                            Защита от спама через Redis (5 запросов/минуту на пользователя)
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">🔐</span>
+                        <div>
+                            <strong>Валидация данных</strong><br>
+                            Pydantic модели для проверки всех входных данных
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">🔑</span>
+                        <div>
+                            <strong>Telegram WebApp Auth</strong><br>
+                            HMAC валидация данных от Telegram WebApp
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">📝</span>
+                        <div>
+                            <strong>Логирование</strong><br>
+                            Полное логирование всех действий через Loguru
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">🔒</span>
+                    <div>
+                        <strong>Best Practices:</strong> Все API ключи хранятся в .env файле, который не коммитится в Git. Используется HTTPS для всех внешних запросов.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Checklist -->
+            <section id="checklist" class="section">
+                <div class="section-header">
+                    <span class="section-icon">✅</span>
+                    <h2 class="section-title">Чек-лист готовности</h2>
+                </div>
+
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Определены функциональные требования MVP</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Выбран технологический стек</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Исследованы API (Suno, Claude, Whisper)</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Разработана архитектура системы</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Спроектирована база данных</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Определена модель монетизации</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Подготовлены UI/UX макеты</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Составлен план разработки</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Описаны требования к безопасности</div>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✅</span>
+                        <div>Подготовлена инфраструктура деплоя</div>
+                    </li>
+                </ul>
+
+                <div class="alert alert-success">
+                    <span class="alert-icon">🚀</span>
+                    <div>
+                        <strong>Статус:</strong> Проект готов к разработке! Все компоненты проверены и задокументированы.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <section class="section">
+                <div style="text-align: center; padding: 2rem; background: var(--bg-color); border-radius: 12px;">
+                    <h3>Контакты и поддержка</h3>
+                    <p>
+                        📧 Email: <a href="mailto:support@uspmusicbot.ru">support@uspmusicbot.ru</a><br>
+                        💬 Telegram: <a href="https://t.me/UspMusicBot" target="_blank">@UspMusicBot</a><br>
+                        💻 GitHub: <a href="https://github.com/uspmusicbot/UspMusicBot" target="_blank">github.com/uspmusicbot/UspMusicBot</a>
+                    </p>
+                    <p style="margin-top: 2rem; color: #999; font-size: 0.9rem;">
+                        <strong>Версия:</strong> 1.0 | <strong>Дата:</strong> 27 февраля 2026 | <strong>Статус:</strong> Готово к разработке
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        ☰
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+
+                    // Update active link
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+
+                    // Close mobile menu
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+
+        // Highlight active section on scroll
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Add copy button to code blocks
+        document.querySelectorAll('.code-block').forEach(block => {
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋 Copy';
+            copyBtn.style.cssText = 'background: var(--primary-color); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;';
+
+            const header = block.querySelector('.code-header');
+            if (header) {
+                header.appendChild(copyBtn);
+            }
+
+            copyBtn.addEventListener('click', () => {
+                const code = block.querySelector('pre').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    copyBtn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy';
+                    }, 2000);
+                });
+            });
+        });
+
+        // Animate stats on scroll
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeIn 0.6s ease-out';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.stat-card, .card, .timeline-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
