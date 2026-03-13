@@ -13,7 +13,7 @@ from bot.texts import (
 )
 from database.crud import (
     deduct_credit, create_song, update_song_result, cache_lyrics,
-    get_lyrics_cache, mark_lyrics_used
+    get_lyrics_cache, mark_lyrics_used, update_user_balance
 )
 from database.models import User
 from services import SunoClient, ClaudeClient
@@ -190,9 +190,22 @@ async def _generate_song_from_cache(
         suno = get_suno()
         claude = get_claude()
 
-        title = await claude.refine_title(lyrics, idea)
-        result = await suno.generate_song(lyrics=lyrics, style=style, prompt=idea)
-        task_id = result.get("task_id") or result.get("id")
+        # Title — fallback если Claude недоступен
+        try:
+            title = await claude.refine_title(lyrics, idea)
+        except Exception as e:
+            logger.warning(f"Claude title failed: {e}")
+            title = idea[:50] if idea and idea != "Готовый текст" else lyrics.split("\n")[0][:50]
+
+        result = await suno.generate_song(lyrics=lyrics, style=style, prompt=title)
+
+        # AIMLAPI v2 returns clip_ids list
+        clip_ids = result.get("clip_ids", [])
+        task_id = clip_ids[0] if clip_ids else result.get("task_id") or result.get("id")
+
+        if not task_id:
+            logger.error(f"No clip_id in Suno response: {result}")
+            raise RuntimeError("Suno API did not return clip_id")
 
         song = await create_song(
             session=session,
@@ -208,7 +221,7 @@ async def _generate_song_from_cache(
             await mark_lyrics_used(session, cache_id)
 
         completed = await suno.wait_for_completion(
-            task_id=task_id,
+            clip_id=task_id,
             max_wait=settings.suno_max_wait,
             poll_interval=settings.suno_poll_interval,
         )

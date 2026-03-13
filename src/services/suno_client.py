@@ -5,7 +5,11 @@ from loguru import logger
 
 
 class SunoClient:
-    def __init__(self, api_key: str, base_url: str = "https://api.aimlapi.com/v1"):
+    """Suno AI music generation via AIMLAPI v2 endpoint."""
+
+    GENERATE_URL = "https://api.aimlapi.com/v2/generate/audio/suno-ai/clip"
+
+    def __init__(self, api_key: str, base_url: str = "https://api.aimlapi.com"):
         self.api_key = api_key
         self.base_url = base_url
         self.headers = {
@@ -20,59 +24,68 @@ class SunoClient:
         prompt: Optional[str] = None,
         make_instrumental: bool = False,
     ) -> Dict:
+        """Generate a song clip. Returns dict with clip_ids."""
         payload = {
-            "gpt_description": prompt or f"{style} song",
-            "lyrics": lyrics,
-            "style": style,
+            "prompt": lyrics,
+            "tags": style,
+            "title": prompt or f"{style} song",
             "make_instrumental": make_instrumental,
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(
-                f"{self.base_url}/generate",
+                self.GENERATE_URL,
                 json=payload,
                 headers=self.headers,
             )
             resp.raise_for_status()
             data = resp.json()
             logger.info(f"Suno generate response: {data}")
+            # Response contains clip_ids list
             return data
 
-    async def get_task_status(self, task_id: str) -> Dict:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+    async def get_clip_status(self, clip_id: str) -> Dict:
+        """Fetch clip status and data."""
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
-                f"{self.base_url}/tasks/{task_id}",
+                self.GENERATE_URL,
+                params={"clip_id": clip_id},
                 headers=self.headers,
             )
             resp.raise_for_status()
             return resp.json()
 
+    # Keep backward compatibility
+    async def get_task_status(self, task_id: str) -> Dict:
+        return await self.get_clip_status(task_id)
+
     async def wait_for_completion(
         self,
-        task_id: str,
-        max_wait: int = 120,
+        clip_id: str,
+        max_wait: int = 180,
         poll_interval: int = 5,
     ) -> Optional[Dict]:
+        """Poll until clip is complete. Returns clip data or None on timeout."""
         elapsed = 0
         while elapsed < max_wait:
             try:
-                result = await self.get_task_status(task_id)
+                result = await self.get_clip_status(clip_id)
                 status = result.get("status", "")
 
-                if status == "completed":
-                    logger.info(f"Task {task_id} completed: {result}")
+                if status == "complete":
+                    logger.info(f"Clip {clip_id} complete")
                     return result
-                elif status == "failed":
+                elif status == "error":
                     error = result.get("error", "Unknown error")
                     raise RuntimeError(f"Suno generation failed: {error}")
 
-                logger.debug(f"Task {task_id} status: {status}, elapsed: {elapsed}s")
+                logger.debug(f"Clip {clip_id} status: {status}, elapsed: {elapsed}s")
             except httpx.HTTPError as e:
-                logger.warning(f"HTTP error polling task {task_id}: {e}")
+                logger.warning(f"HTTP error polling clip {clip_id}: {e}")
 
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
 
-        logger.warning(f"Task {task_id} timed out after {max_wait}s")
+        logger.warning(f"Clip {clip_id} timed out after {max_wait}s")
         return None
 
     def get_style_suggestions(self, theme: str) -> List[Dict]:

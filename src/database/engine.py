@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+import sqlalchemy
 import sys
 import os
 
@@ -15,6 +16,7 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     future=True,
+    connect_args={"timeout": 30},
 )
 
 async_session = async_sessionmaker(
@@ -32,3 +34,6 @@ async def get_db() -> AsyncSession:
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # WAL mode для лучшей параллельности SQLite
+        await conn.execute(sqlalchemy.text("PRAGMA journal_mode=WAL"))
+        await conn.execute(sqlalchemy.text("PRAGMA busy_timeout=30000"))
